@@ -7,8 +7,6 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 
 require('dotenv').config();
 
-
-
 // middleware
 app.use(express.json());
 app.use(cors());
@@ -21,6 +19,26 @@ const client = new MongoClient(uri, {
 	useUnifiedTopology: true,
 	serverApi: ServerApiVersion.v1,
 });
+
+async function run() {
+	try {
+		const serviceCollection = client.db('nikahPhotography').collection('services');
+
+        // creating services to database
+		app.post('/services', async (req, res) => {
+			const service = req.body;
+			// console.log(service);
+			const result = await serviceCollection.insertOne(service);
+			res.send(result);
+        });
+        
+        // reading services from database
+
+	} finally {
+	}
+}
+
+run().catch((err) => console.log(err));
 
 console.log(uri);
 
