@@ -36,7 +36,7 @@ async function run() {
 		// reading only 3 services from database
 		app.get('/limited-services', async (req, res) => {
 			const query = {};
-			const cursor = serviceCollection.find(query);
+			const cursor = serviceCollection.find(query).sort({ _id: -1 });
 			const services = await cursor.limit(3).toArray();
 			res.send(services);
 		});
@@ -44,7 +44,7 @@ async function run() {
 		// reading only 3 services from database
 		app.get('/services', async (req, res) => {
 			const query = {};
-			const cursor = serviceCollection.find(query);
+			const cursor = serviceCollection.find(query).sort({ _id: -1 });
 			const services = await cursor.toArray();
 			res.send(services);
 		});
@@ -66,19 +66,57 @@ async function run() {
 			res.send(result);
 		});
 
+		// getting reviews
 		app.get('/reviews', async (req, res) => {
-			const query = {};
+			let query = {};
+			if (req.query.service) {
+				query = { 'review.serviceId': req.query.service };
+			}
 			const cursor = reviewCollection.find(query).sort({ time: -1 });
 			const reviews = await cursor.toArray();
 			res.send(reviews);
+		});
+
+		// getting users review
+
+		app.get('/my-reviews', async (req, res) => {
+			let query = {};
+			if (req.query.email) {
+				query = { 'review.email': req.query.email };
+			}
+			const cursor = reviewCollection.find(query);
+			const reviews = await cursor.toArray();
+			res.send(reviews);
+		});
+
+		app.get('/reviews/:id', async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: ObjectId(id) };
+			const review = await reviewCollection.findOne(query);
+			res.send(review);
+		});
+
+		// updating existing reviews
+
+		app.patch('/reviews/:id', async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: ObjectId(id) };
+			const review = req.body;
+
+			const updatedReview = {
+				$set: {
+					review: review,
+				},
+			};
+
+			const result = await reviewCollection.updateOne(query, updatedReview);
+			res.send(result);
 		});
 	} finally {
 	}
 }
 
 run().catch((err) => console.log(err));
-
-console.log(uri);
 
 app.get('/', (req, res) => {
 	res.send('Assignment 11 server running');
