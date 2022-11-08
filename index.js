@@ -20,10 +20,20 @@ const client = new MongoClient(uri, {
 	serverApi: ServerApiVersion.v1,
 });
 
+console.log(process.env.ACCESS_TOKEN_SECRET);
+
 async function run() {
 	try {
 		const serviceCollection = client.db('nikahPhotography').collection('services');
 		const reviewCollection = client.db('nikahPhotography').collection('reviews');
+
+		// creating jwt token
+
+		app.post('/jwt', (req, res) => {
+			const user = req.body;
+			const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
+			res.send({token})
+		});
 
 		// creating services to database
 		app.post('/services', async (req, res) => {
