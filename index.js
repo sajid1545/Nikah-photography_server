@@ -20,7 +20,23 @@ const client = new MongoClient(uri, {
 	serverApi: ServerApiVersion.v1,
 });
 
-console.log(process.env.ACCESS_TOKEN_SECRET);
+// jwt verification
+
+function verifyJWT(req, res, next) {
+	const authHeader = req.headers.authorization;
+
+	if (!authHeader) {
+		return res.status(401).send({ message: 'Invalid authorization ' });
+	}
+
+	const token = authHeader.split(' ')[1];
+
+	jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+		if (err) {
+			return res.status(401).send({ message: 'Invalid authorization ' });
+		}
+	});
+}
 
 async function run() {
 	try {
@@ -32,7 +48,7 @@ async function run() {
 		app.post('/jwt', (req, res) => {
 			const user = req.body;
 			const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
-			res.send({token})
+			res.send({ token });
 		});
 
 		// creating services to database
@@ -43,7 +59,7 @@ async function run() {
 			res.send(result);
 		});
 
-		// reading only 3 services from database
+		// reading only 3 services from database in descending order
 		app.get('/limited-services', async (req, res) => {
 			const query = {};
 			const cursor = serviceCollection.find(query).sort({ _id: -1 });
@@ -51,7 +67,7 @@ async function run() {
 			res.send(services);
 		});
 
-		// reading only 3 services from database
+		// reading every services from database in descending order
 		app.get('/services', async (req, res) => {
 			const query = {};
 			const cursor = serviceCollection.find(query).sort({ _id: -1 });
@@ -90,6 +106,8 @@ async function run() {
 		// getting users review
 
 		app.get('/my-reviews', async (req, res) => {
+			console.log();
+
 			let query = {};
 			if (req.query.email) {
 				query = { 'review.email': req.query.email };
@@ -98,6 +116,8 @@ async function run() {
 			const reviews = await cursor.toArray();
 			res.send(reviews);
 		});
+
+		// single review
 
 		app.get('/reviews/:id', async (req, res) => {
 			const id = req.params.id;
