@@ -35,6 +35,8 @@ function verifyJWT(req, res, next) {
 		if (err) {
 			return res.status(401).send({ message: 'Invalid authorization ' });
 		}
+		req.decoded = decoded;
+		next();
 	});
 }
 
@@ -105,10 +107,15 @@ async function run() {
 
 		// getting users review
 
-		app.get('/my-reviews', async (req, res) => {
-			console.log();
+		app.get('/my-reviews', verifyJWT, async (req, res) => {
+			const decoded = req.decoded;
+
+			if (decoded.email !== req.query.email) {
+				res.status(403).send({ message: 'unauthorized access' });
+			}
 
 			let query = {};
+
 			if (req.query.email) {
 				query = { 'review.email': req.query.email };
 			}
