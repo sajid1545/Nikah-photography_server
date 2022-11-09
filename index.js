@@ -71,10 +71,17 @@ async function run() {
 
 		// reading every services from database in descending order
 		app.get('/services', async (req, res) => {
+			const page = parseInt(req.query.page);
+			const size = parseInt(req.query.size);
+			console.log(page,size);
 			const query = {};
 			const cursor = serviceCollection.find(query).sort({ _id: -1 });
-			const services = await cursor.toArray();
-			res.send(services);
+			const services = await cursor
+				.skip(page * size)
+				.limit(size)
+				.toArray();
+			const count = await serviceCollection.estimatedDocumentCount();
+			res.send({ services, count });
 		});
 
 		// reading only single service from database
